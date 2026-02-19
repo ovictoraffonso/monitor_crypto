@@ -19,8 +19,8 @@
 O principal desafio foi criar um loop infinito de monitoramento sem causar travamentos (locks) no banco de dados SQLite. Isso foi resolvido isolando a abertura e o fechamento da conexão com o banco a cada ciclo de inserção. Além disso, foi necessário tratar as strings de data e hora geradas pela biblioteca datetime para manter o padrão correto no banco.
 
 ## 📸 Screenshots
+<img width="341" height="286" alt="image" src="https://github.com/user-attachments/assets/c9970011-04cf-4416-8183-683305bfa8bc" />
 
-![alt text](image-1.png)
 
 ## 🚀 Como Rodar
  
