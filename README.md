@@ -20,7 +20,7 @@ O principal desafio foi criar um loop infinito de monitoramento sem causar trava
 
 ## 📸 Screenshots
 
-![alt text](image.png)
+![alt text](image-1.png)
 
 ## 🚀 Como Rodar
  
