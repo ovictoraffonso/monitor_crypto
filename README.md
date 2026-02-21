@@ -31,4 +31,4 @@ git clone https://github.com/ovictoraffonso/monitor_crypto.git
 pip install requests pandas
 
 # Execute o monitoramento
-python monitor.py
+python monitor_crypto/monitor.py
