@@ -3,9 +3,10 @@ import pandas as pd
 import sqlite3
 import datetime
 import time
+import matplotlib.pyplot as plt
 
 
-db_name = "monitoramento.db"
+df_name = "monitoramento.db"
 tb_name = "valor_bitcoin"
 
 
@@ -21,11 +22,11 @@ def get_dateAndTime():
     today = str(datetime.datetime.now())
     today = today.split()
     today[1] = today[1].split(".")[0]
-    return today
+    return today  # [dia][hora]
 
 
-def inicia_banco(db_name):
-    conn = sqlite3.connect(db_name)
+def inicia_banco(df_name):
+    conn = sqlite3.connect(df_name)
     cursor = conn.cursor()
     cursor.execute(
         """
@@ -40,8 +41,8 @@ def inicia_banco(db_name):
     conn.close()
 
 
-def atualiza_banco(db_name):
-    conn = sqlite3.connect(db_name)
+def atualiza_banco(df_name):
+    conn = sqlite3.connect(df_name)
     cursor = conn.cursor()
     data_hoje, hora_agora = get_dateAndTime()
     valor_agora = get_value_bit()
@@ -53,27 +54,51 @@ def atualiza_banco(db_name):
     )
     conn.commit()
     conn.close()
+    return hora_agora, valor_agora
 
 
-def ler_db(db_name, tb_name):
-    conn = sqlite3.connect(db_name)
+def to_csv(df_name, tb_name):
+    conn = sqlite3.connect(df_name)
     df = pd.read_sql_query(f"SELECT * FROM {tb_name}", conn)
-    print(df.to_string(index=False))
+    df = df.to_csv("monitoramento.csv", index=False)
     conn.close()
 
 
-inicia_banco(db_name)
-print("Banco iniciado")
-try:
-    while True:
-        atualiza_banco(db_name)
-        print("Atualização feita, aguardando a proxima! (60s)")
-        print("ctrl + c para encerrar")
-        time.sleep(60)
+def mostra_grafico(x, y):
+    plt.clf()
+    plt.plot(x, y)
+    plt.title("Variação do bitcoin")
+    plt.ylabel("Valor em dolar")
+    plt.xlabel("Hora")
 
+
+inicia_banco(df_name)
+print("Banco iniciado")
+
+try:
+    contagem = 1
+    x = []
+    y = []
+    plt.ion()
+    mostra_grafico(x, y)
+    while plt.get_fignums():
+        cords_x, cords_y = atualiza_banco(df_name)
+        print(f"{contagem}° atualização feita, aguardando a proxima! (20s)")
+
+        x.append(cords_x)
+        y.append(cords_y)
+
+        mostra_grafico(x, y)
+
+        plt.pause(20)
+
+        contagem += 1
 except KeyboardInterrupt:
     print("Monitoramento interrompido!")
 
+except Exception:
+    print("Erro de requisição")
+
 finally:
-    print("Resumo")
-    ler_db(db_name, tb_name)
+    to_csv(df_name, tb_name)
+    print("Dados obtidos em .csv")

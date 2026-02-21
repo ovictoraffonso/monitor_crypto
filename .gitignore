@@ -1,6 +1,7 @@
 *.db
 *.sqlite3
 monitoramento.db
+monitoramento.csv
 
 __pycache__/
 *.pyc
