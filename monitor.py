@@ -2,7 +2,6 @@ import requests
 import pandas as pd
 import sqlite3
 import datetime
-import time
 import matplotlib.pyplot as plt
 
 
