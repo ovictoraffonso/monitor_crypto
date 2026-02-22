@@ -10,11 +10,16 @@ tb_name = "valor_bitcoin"
 
 
 def get_value_bit():
-    response = requests.get(
-        "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd"
-    ).json()
+    try:
+        response = requests.get(
+            "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd"
+        ).json()
 
-    return response["bitcoin"]["usd"]
+        return response["bitcoin"]["usd"]
+
+    except Exception:
+        print("Erro de requisição!")
+        return None
 
 
 def get_dateAndTime():
@@ -41,18 +46,21 @@ def inicia_banco(df_name):
 
 
 def atualiza_banco(df_name):
-    conn = sqlite3.connect(df_name)
-    cursor = conn.cursor()
     data_hoje, hora_agora = get_dateAndTime()
     valor_agora = get_value_bit()
-    cursor.execute(
-        """
-        INSERT INTO valor_bitcoin (dia, hora, valor_bit) VALUES (?,?,?)
-        """,
-        (data_hoje, hora_agora, valor_agora),
-    )
-    conn.commit()
-    conn.close()
+
+    if valor_agora is not None:
+        conn = sqlite3.connect(df_name)
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            INSERT INTO valor_bitcoin (dia, hora, valor_bit) VALUES (?,?,?)
+            """,
+            (data_hoje, hora_agora, valor_agora),
+        )
+        conn.commit()
+        conn.close()
+
     return hora_agora, valor_agora
 
 
@@ -82,16 +90,18 @@ try:
     mostra_grafico(x, y)
     while plt.get_fignums():
         cords_x, cords_y = atualiza_banco(df_name)
-        print(f"{contagem}° atualização feita, aguardando a proxima! (20s)")
 
-        x.append(cords_x)
-        y.append(cords_y)
+        if cords_y is not None:
+            print(f"{contagem}° atualização feita, aguardando a proxima! (20s)")
+            contagem += 1
 
-        mostra_grafico(x, y)
+            x.append(cords_x)
+            y.append(cords_y)
+
+            mostra_grafico(x, y)
 
         plt.pause(20)
 
-        contagem += 1
 except KeyboardInterrupt:
     print("Monitoramento interrompido!")
 
