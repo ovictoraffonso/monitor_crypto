@@ -48,26 +48,36 @@ def inicia_banco(df_name):
 def atualiza_banco(df_name):
     data_hoje, hora_agora = get_dateAndTime()
     valor_agora = get_value_bit()
-
     if valor_agora is not None:
-        conn = sqlite3.connect(df_name)
-        cursor = conn.cursor()
-        cursor.execute(
-            """
-            INSERT INTO valor_bitcoin (dia, hora, valor_bit) VALUES (?,?,?)
-            """,
-            (data_hoje, hora_agora, valor_agora),
-        )
-        conn.commit()
-        conn.close()
+        try:
+            conn = sqlite3.connect(df_name)
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                INSERT INTO valor_bitcoin (dia, hora, valor_bit) VALUES (?,?,?)
+                """,
+                (data_hoje, hora_agora, valor_agora),
+            )
+            conn.commit()
+            conn.close()
+        except Exception:
+            raise Exception("Erro na atualização")
 
     return hora_agora, valor_agora
 
 
 def to_csv(df_name, tb_name):
     conn = sqlite3.connect(df_name)
-    df = pd.read_sql_query(f"SELECT * FROM {tb_name}", conn)
-    df = df.to_csv("monitoramento.csv", index=False)
+    df = pd.read_sql_query(
+        f"""SELECT  id, 
+                    dia, 
+                    hora, 
+                    valor_bit, 
+                    valor_bit - (lag(valor_bit) OVER (ORDER BY id)) AS diferenca 
+                    FROM {tb_name}""", 
+                    conn,
+    )
+    df.to_csv("monitoramento.csv", index=False)
     conn.close()
 
 
