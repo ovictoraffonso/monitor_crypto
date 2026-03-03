@@ -68,15 +68,14 @@ def atualiza_banco(df_name):
 
 def to_csv(df_name, tb_name):
     conn = sqlite3.connect(df_name)
-    df = pd.read_sql_query(
-        f"""SELECT  id, 
+    query = f"""SELECT  id, 
                     dia, 
                     hora, 
                     valor_bit, 
                     valor_bit - (lag(valor_bit) OVER (ORDER BY id)) AS diferenca 
-                    FROM {tb_name}""", 
-                    conn,
-    )
+                    FROM {tb_name}
+                """
+    df = pd.read_sql_query(query, conn)
     df.to_csv("monitoramento.csv", index=False)
     conn.close()
 
