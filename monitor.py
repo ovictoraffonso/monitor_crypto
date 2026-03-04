@@ -70,10 +70,10 @@ def to_csv(df_name):
 
 
 def mostra_grafico(df_name):
-    df = data_Formatado(df_name) 
+    df = data_Formatado(df_name)
     plt.clf()
-    plt.plot(df["hora"], df["valor_bit"],marker="o", label="Valor em dolar")
-    plt.plot(df["hora"] ,df["media_movel"], label="Média movel")
+    plt.plot(df["hora"], df["valor_bit"], marker="o", label="Valor em dolar")
+    plt.plot(df["hora"], df["media_movel"], label="Média movel")
     plt.grid(True)
     plt.title("Variação bitcoin")
     plt.ylabel("Valor bitcoin")
@@ -86,11 +86,11 @@ def mostra_grafico(df_name):
 def data_Formatado(df_name):
     with sqlite3.connect(df_name) as conn:
         df = pd.read_sql("SELECT * FROM valor_bitcoin", conn)
-    
-    df["diferenca"] = df["valor_bit"].diff()
-    df["media_movel"] = round(df["valor_bit"].rolling(window= 3, min_periods=1).mean(), 3)
-    
 
+    df["diferenca"] = df["valor_bit"].diff()
+    df["media_movel"] = round(
+        df["valor_bit"].rolling(window=3, min_periods=1).mean(), 3
+    )
     return df
 
 
