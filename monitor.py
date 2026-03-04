@@ -64,31 +64,34 @@ def atualiza_banco(df_name):
     return hora_agora, valor_agora
 
 
-def to_csv(df_name, tb_name):
-    with sqlite3.connect(df_name) as conn:
-        query = f"""SELECT  id, 
-                        dia, 
-                        hora, 
-                        valor_bit, 
-                        valor_bit - (lag(valor_bit) OVER (ORDER BY id)) AS diferenca
-                        FROM {tb_name}
-                    """
-        df = pd.read_sql_query(query, conn)
+def to_csv(df_name):
+    df = data_Formatado(df_name)
     df.to_csv("monitoramento.csv", index=False)
 
 
 def mostra_grafico(df_name):
-    with sqlite3.connect(df_name) as conn:
-        df = pd.read_sql_query("SELECT hora, dia, valor_bit FROM valor_bitcoin", conn)
-
+    df = data_Formatado(df_name) 
     plt.clf()
-    plt.plot(df["hora"], df["valor_bit"],marker="o")
+    plt.plot(df["hora"], df["valor_bit"],marker="o", label="Valor em dolar")
+    plt.plot(df["hora"] ,df["media_movel"], label="Média movel")
     plt.grid(True)
     plt.title("Variação bitcoin")
     plt.ylabel("Valor bitcoin")
     plt.xlabel("hora")
     plt.xticks(rotation=45)
+    plt.legend()
     plt.tight_layout()
+
+
+def data_Formatado(df_name):
+    with sqlite3.connect(df_name) as conn:
+        df = pd.read_sql("SELECT * FROM valor_bitcoin", conn)
+    
+    df["diferenca"] = df["valor_bit"].diff()
+    df["media_movel"] = round(df["valor_bit"].rolling(window= 3, min_periods=1).mean(), 3)
+    
+
+    return df
 
 
 inicia_banco(df_name)
@@ -114,8 +117,8 @@ except KeyboardInterrupt:
     print("Monitoramento interrompido!")
 
 except Exception:
-    print("Erro de requisição")
+    print("Erro desconhecido")
 
 finally:
-    to_csv(df_name, tb_name)
+    to_csv(df_name)
     print("Dados obtidos em .csv")
