@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 
 df_name = "monitoramento.db"
 tb_name = "valor_bitcoin"
+contagem = 1
 
 
 def get_value_bit():
@@ -30,19 +31,17 @@ def get_dateAndTime():
 
 
 def inicia_banco(df_name):
-    conn = sqlite3.connect(df_name)
-    cursor = conn.cursor()
-    cursor.execute(
-        """
-        CREATE TABLE IF NOT EXISTS valor_bitcoin (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        dia TEXT NOT NULL,
-        hora TEXT NOT NULL,
-        valor_bit FLOAT
-        )
-        """
-    )
-    conn.close()
+    with sqlite3.connect(df_name) as conn:
+        cursor = conn.cursor()
+        query = """
+            CREATE TABLE IF NOT EXISTS valor_bitcoin (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            dia TEXT NOT NULL,
+            hora TEXT NOT NULL,
+            valor_bit FLOAT
+            )
+            """
+        cursor.execute(query)
 
 
 def atualiza_banco(df_name):
@@ -50,16 +49,15 @@ def atualiza_banco(df_name):
     valor_agora = get_value_bit()
     if valor_agora is not None:
         try:
-            conn = sqlite3.connect(df_name)
-            cursor = conn.cursor()
-            cursor.execute(
-                """
-                INSERT INTO valor_bitcoin (dia, hora, valor_bit) VALUES (?,?,?)
-                """,
-                (data_hoje, hora_agora, valor_agora),
-            )
-            conn.commit()
-            conn.close()
+            with sqlite3.connect(df_name) as conn:
+                cursor = conn.cursor()
+                cursor.execute(
+                    """
+                    INSERT INTO valor_bitcoin (dia, hora, valor_bit) VALUES (?,?,?)
+                    """,
+                    (data_hoje, hora_agora, valor_agora),
+                )
+                conn.commit()
         except Exception:
             raise Exception("Erro na atualização")
 
@@ -67,47 +65,48 @@ def atualiza_banco(df_name):
 
 
 def to_csv(df_name, tb_name):
-    conn = sqlite3.connect(df_name)
-    query = f"""SELECT  id, 
-                    dia, 
-                    hora, 
-                    valor_bit, 
-                    valor_bit - (lag(valor_bit) OVER (ORDER BY id)) AS diferenca 
-                    FROM {tb_name}
-                """
-    df = pd.read_sql_query(query, conn)
+    with sqlite3.connect(df_name) as conn:
+        query = f"""SELECT  id, 
+                        dia, 
+                        hora, 
+                        valor_bit, 
+                        valor_bit - (lag(valor_bit) OVER (ORDER BY id)) AS diferenca
+                        FROM {tb_name}
+                    """
+        df = pd.read_sql_query(query, conn)
     df.to_csv("monitoramento.csv", index=False)
-    conn.close()
 
 
-def mostra_grafico(x, y):
+def mostra_grafico(df_name):
+    with sqlite3.connect(df_name) as conn:
+        df = pd.read_sql_query("SELECT hora, dia, valor_bit FROM valor_bitcoin", conn)
+
     plt.clf()
-    plt.plot(x, y)
-    plt.title("Variação do bitcoin")
-    plt.ylabel("Valor em dolar")
-    plt.xlabel("Hora")
+    plt.plot(df["hora"], df["valor_bit"],marker="o")
+    plt.grid(True)
+    plt.title("Variação bitcoin")
+    plt.ylabel("Valor bitcoin")
+    plt.xlabel("hora")
+    plt.xticks(rotation=45)
+    plt.tight_layout()
 
 
 inicia_banco(df_name)
 print("Banco iniciado")
 
 try:
-    contagem = 1
-    x = []
-    y = []
     plt.ion()
-    mostra_grafico(x, y)
-    while plt.get_fignums():
-        cords_x, cords_y = atualiza_banco(df_name)
+    mostra_grafico(df_name)
 
-        if cords_y is not None:
+    while plt.get_fignums():
+        hora, valor = atualiza_banco(df_name)
+
+        if valor is not None:
             print(f"{contagem}° atualização feita, aguardando a proxima! (20s)")
             contagem += 1
 
-            x.append(cords_x)
-            y.append(cords_y)
-
-            mostra_grafico(x, y)
+            mostra_grafico(df_name)
+            plt.draw()
 
         plt.pause(20)
 
