@@ -73,7 +73,7 @@ def mostra_grafico(df_name):
     df = data_Formatado(df_name)
     plt.clf()
     plt.plot(df["hora"], df["valor_bit"], marker="o", label="Valor em dolar")
-    plt.plot(df["hora"], df["media_movel"], label="Média movel")
+    plt.plot(df["hora"], df["media_movel"], label="Média Móvel")
     plt.grid(True)
     plt.title("Variação bitcoin")
     plt.ylabel("Valor bitcoin")
